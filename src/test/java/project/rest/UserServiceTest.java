@@ -1,15 +1,16 @@
 package project.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ClassPathResource;
 import project.rest.common.NotFoundException;
-import project.rest.model.AddressDTO;
-import project.rest.model.CompanyDTO;
-import project.rest.model.GeoDTO;
 import project.rest.model.UserDTO;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,6 +21,18 @@ public class UserServiceTest {
     @InjectMocks
     UserService userService;
 
+    private final String userMockFile = "user_data.json";
+
+
+    public <T> T readJsonFileToObject(String filePath, Class<T> objectType) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ClassPathResource resource = new ClassPathResource(filePath);
+        try (InputStream inputStream = resource.getInputStream()) {
+            return objectMapper.readValue(inputStream, objectType);
+        }
+    }
+
+
     @Test
     public void whenGetUsers_ThenReturnUsers() {
         List<UserDTO> userDTOs = userService.getUsers();
@@ -27,84 +40,40 @@ public class UserServiceTest {
     }
 
     @Test
-    public void whenGetUserById_ThenReturnUser() {
+    public void givenUserId_whenGetUserById_ThenReturnUser() {
         UserDTO userDTO = userService.getUserById(1);
         assertNotNull(userDTO);
         assertEquals(1, userDTO.getId());
     }
 
     @Test
-    public void whenGetUserById_ThenReturnNotFoundException(){
+    public void givenNoUserId_whenGetUserById_ThenReturnNotFoundException(){
         assertThrows(NotFoundException.class, () -> userService.getUserById(555));
     }
 
     @Test
-    public void whenCreateUser_ThenReturnUser() {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(111);
-        userDTO.setName("User 3");
-        userDTO.setWebsite("www.user3.com");
-        userDTO.setPhone("123456789");
+    public void givenUserRequest_whenCreateUser_ThenReturnUser() throws IOException {
 
-        CompanyDTO companyDTO = new CompanyDTO();
-        companyDTO.setName("Company 1");
-        companyDTO.setCatchPhrase("www.company1.com");
-        companyDTO.setBs("987654321");
-        userDTO.setCompany(companyDTO);
-
-        AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setStreet("Street 1");
-        addressDTO.setSuite("Suite 1");
-        addressDTO.setCity("City 1");
-        addressDTO.setZipcode("12345");
-
-        GeoDTO geoDTO = new GeoDTO();
-        geoDTO.setLat("-37.3159");
-        geoDTO.setLng("81.1496");
-
-        addressDTO.setGeo(geoDTO);
-
+        UserDTO userDTO = readJsonFileToObject(userMockFile, UserDTO.class);
 
         UserDTO createdUser = userService.createUser(userDTO);
 
-        assertNotNull(createdUser);
-        assertEquals(111, createdUser.getId());
+        assertNotNull(userDTO);
+        assertEquals("Test Meow", createdUser.getName());
         assertEquals(11, userService.getUsers().size());
     }
 
     @Test
-    public void whenUpdateUser_ThenSuccessUpdateUser() {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(2);
-        userDTO.setName("Test");
-        userDTO.setUsername("Antonette");
-        userDTO.setEmail("Shanna@melissa.tv");
-        userDTO.setPhone("010-692-6593");
-        userDTO.setWebsite("anastasia.net");
+    public void whenUpdateUser_ThenSuccessUpdateUser() throws IOException {
+        UserDTO userDTO = readJsonFileToObject(userMockFile, UserDTO.class);
 
-        AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setStreet("Victor Plains");
-        addressDTO.setSuite("Suite 879");
-        addressDTO.setCity("Wisokyburgh");
-        addressDTO.setZipcode("90566-7771");
-
-        GeoDTO geoDTO = new GeoDTO();
-        geoDTO.setLat("-37.3159");
-        geoDTO.setLng("81.1496");
-
-        addressDTO.setGeo(geoDTO);
-
-        CompanyDTO companyDTO = new CompanyDTO();
-        companyDTO.setName("Deckow-Crist");
-        companyDTO.setCatchPhrase("Proactive didactic contingency");
-        companyDTO.setBs("synergize scalable supply-chains");
-
+        userDTO.setName("PPPP");
 
         UserDTO updateUser = userService.updateUser(2, userDTO);
 
         assertNotNull(updateUser);
-        assertEquals(2, updateUser.getId());
-        assertEquals("Test", updateUser.getName());
+        assertEquals(1, updateUser.getId());
+        assertEquals("PPPP", updateUser.getName());
         assertNotEquals("Leanne Graham", updateUser.getName());
     }
 
